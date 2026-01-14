@@ -24,9 +24,11 @@
         .info-table td { padding: 4px; border: none; font-size: 11pt; }
         select, input { width: 100%; border: none; border-bottom: 1px dotted #000; font-family: inherit; font-size: 11pt; outline: none; background: transparent; }
 
-        /* Progress Bar */
-        .prog-container { width: 100%; background: #eee; height: 10px; border-radius: 5px; margin: 10px 0; overflow: hidden; }
-        #bar { height: 100%; background: var(--accent); width: 0%; transition: 0.3s; }
+        /* Progress Bar & Percentage */
+        .prog-wrapper { width: 100%; margin: 15px 0; }
+        .prog-header { display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: bold; font-size: 12px; color: var(--accent); }
+        .prog-container { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; }
+        #bar { height: 100%; background: var(--accent); width: 0%; transition: 0.4s ease-out; }
 
         table.main-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         table.main-table th, table.main-table td { border: 1px solid black; padding: 6px; font-size: 11pt; }
@@ -35,7 +37,7 @@
 
         .footer { margin-top: 30px; display: flex; justify-content: space-between; text-align: center; }
         .footer div { width: 250px; }
-        .btn-unduh { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-unduh { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }
 
         @media print { .no-print { display: none !important; } .page { box-shadow: none; margin: 0; width: 100%; } }
     </style>
@@ -47,24 +49,30 @@
         <label>Logo Sekolah: </label>
         <input type="file" id="logo-input" accept="image/*" style="width: auto; border: none;">
     </div>
-    <button class="btn-unduh" onclick="downloadPDF()">💾 UNDUH PDF</button>
+    <button class="btn-unduh" onclick="downloadPDF()">💾 UNDUH PDF SEKARANG</button>
 </div>
 
 <div class="page" id="document">
     <div class="kop-surat">
         <img id="logo-preview" src="https://via.placeholder.com/80?text=LOGO" alt="Logo">
         <div class="kop-text">
-            <p>PEMERINTAH KABUPATEN MALANG</p>
-            <p>DINAS PENDIDIKAN</p>
-            <h2>SMP NEGERI 2 KALIPARE</h2>
-            <span>Jalan Raya Banduarjo No. 1099 Sumberpetung Kab. Malang, Kode Pos 65166</span>
+            <p>PEMERINTAH KABUPATEN MALANG [cite: 3]</p>
+            <p>DINAS PENDIDIKAN [cite: 4]</p>
+            <h2>SMP NEGERI 2 KALIPARE [cite: 5]</h2>
+            <span>Jalan Raya Banduarjo No. 1099 Sumberpetung Kab. Malang, Kode Pos 65166 [cite: 5, 9]</span>
         </div>
     </div>
 
     <h3 style="text-align: center; text-decoration: underline;">CEKLIS KELENGKAPAN ADMINISTRASI GURU</h3>
 
-    <div class="prog-container no-print">
-        <div id="bar"></div>
+    <div class="prog-wrapper no-print">
+        <div class="prog-header">
+            <span>PROGRES KELENGKAPAN:</span>
+            <span id="prog-percent">0%</span>
+        </div>
+        <div class="prog-container">
+            <div id="bar"></div>
+        </div>
     </div>
 
     <table class="info-table">
@@ -106,7 +114,7 @@
             <p>Mengetahui,</p>
             <p>Kepala Sekolah</p>
             <br><br><br>
-            <p><strong>ELISABET DWI BUDIATI, S.Pd</strong><br>NIP. 197507312002122005</p>
+            <p><strong>ELISABET DWI BUDIATI, S.Pd [cite: 1]</strong><br>NIP. 197507312002122005 [cite: 1]</p>
         </div>
         <div>
             <p>Kalipare, ........................... 2026</p>
@@ -118,7 +126,7 @@
 </div>
 
 <script>
-    // Data Guru sesuai file PDF yang diunggah
+    // Data Guru dari SMPN 2 KALIPARE 
     const dataGuru = [
         { nama: "SULISTIONO, S.Pd", nip: "197209232006041007" },
         { nama: "NOVITA K. M., S.Pd., M.Pd", nip: "198204292009042004" },
@@ -141,7 +149,6 @@
         "Buku Agenda Guru", "Analisis Hasil Evaluasi", "Program Perbaikan & Pengayaan"
     ];
 
-    // Inisialisasi Dropdown Guru
     const select = document.getElementById('guru-select');
     dataGuru.forEach(g => {
         let opt = document.createElement('option');
@@ -150,46 +157,40 @@
         select.add(opt);
     });
 
-    // Inisialisasi Tabel Ceklis
     const tbody = document.getElementById('table-body');
     checklistItems.forEach((item, i) => {
         tbody.innerHTML += `<tr><td class="center">${i+1}</td><td>${item}</td><td class="center"><input type="checkbox" class="chk" onchange="calc()"></td></tr>`;
     });
 
-    // Fungsi Update Identitas di Tabel & Tanda Tangan
     function updateNip() {
         const selectedOpt = select.options[select.selectedIndex];
-        const nipVal = selectedOpt.value;
-        const namaVal = selectedOpt.text;
-
-        // Update di bagian info atas
-        document.getElementById('nip-display').innerText = nipVal || "..........................................";
+        document.getElementById('nip-display').innerText = selectedOpt.value || "..........................................";
         
-        // Update di bagian tanda tangan
         if (select.value === "") {
             document.getElementById('guru-name-footer').innerText = "____________________";
             document.getElementById('guru-nip-footer').innerText = "NIP. ..........................................";
         } else {
-            document.getElementById('guru-name-footer').innerText = namaVal;
-            document.getElementById('guru-nip-footer').innerText = "NIP. " + nipVal;
+            document.getElementById('guru-name-footer').innerText = selectedOpt.text;
+            document.getElementById('guru-nip-footer').innerText = "NIP. " + selectedOpt.value;
         }
     }
 
-    // Handler Upload Logo
     document.getElementById('logo-input').addEventListener('change', function(e) {
         const reader = new FileReader();
         reader.onload = function() { document.getElementById('logo-preview').src = reader.result; }
         reader.readAsDataURL(e.target.files[0]);
     });
 
-    // Kalkulasi Progress Bar
+    // Fungsi Kalkulasi & Tampilkan Prosentase
     function calc() {
         const total = document.querySelectorAll('.chk').length;
         const checked = document.querySelectorAll('.chk:checked').length;
-        document.getElementById('bar').style.width = Math.round((checked / total) * 100) + '%';
+        const percentage = Math.round((checked / total) * 100);
+        
+        document.getElementById('bar').style.width = percentage + '%';
+        document.getElementById('prog-percent').innerText = percentage + '%';
     }
 
-    // Fungsi Export ke PDF
     function downloadPDF() {
         const element = document.getElementById('document');
         html2pdf().set({
